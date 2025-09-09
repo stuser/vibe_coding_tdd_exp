@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from fastapi import APIRouter, HTTPException
 
 from .domain.models import Balance, SettleRequest, SettleResponse, Transfer
@@ -31,12 +32,20 @@ def settle(payload: SettleRequest) -> SettleResponse:
 
     balances = [Balance(person=p, amount=a) for p, a in balances_map.items()]
     transfers = [
-        Transfer(from_=t["from"], to=t["to"], amount=t["amount"], currency=payload.base_currency)
+        Transfer.model_validate(
+            {
+                "from": t["from"],
+                "to": t["to"],
+                "amount": t["amount"],
+                "currency": payload.base_currency,
+            }
+        )
         for t in transfers_raw
     ]
 
     labels = [b.person for b in balances]
-    values = [float(b.amount) for b in balances]
+    quant = Decimal("1").scaleb(-payload.rounding.places)
+    values = [str(b.amount.quantize(quant)) for b in balances]
 
     return SettleResponse(
         base_currency=payload.base_currency,
