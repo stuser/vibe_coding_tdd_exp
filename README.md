@@ -1,4 +1,5 @@
-# 本專案參考自 Open Vibe Developers 社群聚會範例(由講者 ko ko提供 `AGENTS.md`) (https://discord.com/channels/1389625254736826530/1389632718790463568)
+# 專案參考說明:
+ 本專案參考自 Open Vibe Developers 社群聚會範例(由講者 ko ko提供 `AGENTS.md`) (https://discord.com/channels/1389625254736826530/1389632718790463568)
 
 # Trip Splitter — 多人旅行分帳（FastAPI）
 
