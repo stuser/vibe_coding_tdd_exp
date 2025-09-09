@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from app.domain.settle import compute_balances, suggest_transfers_greedy
-from app.utils.errors import InvalidAmountError, MissingRateError
+from app.utils.errors import InvalidAmountError, InvalidParticipantsError, MissingRateError
 
 
 def test_should_compute_balances_for_mixed_currencies():
@@ -103,6 +103,26 @@ def test_should_error_when_missing_rate_for_currency():
         assert False, "Expected MissingRateError"
 
 
+def test_should_error_on_duplicate_participants():
+    people = ["Alice", "Bob"]
+    rates = {"USD": Decimal("1")}
+    expenses = [
+        dict(
+            id="e1",
+            payer="Alice",
+            amount=Decimal("10"),
+            currency="USD",
+            participants=["Alice", "Bob", "Bob"],
+        )
+    ]
+    try:
+        compute_balances(people, rates, expenses)
+    except InvalidParticipantsError:
+        pass
+    else:
+        assert False, "Expected InvalidParticipantsError"
+
+
 def test_should_round_output_balances_to_two_decimals_and_sum_zero():
     people = ["A", "B", "C"]
     rates = {"USD": Decimal("1")}
@@ -157,5 +177,33 @@ def test_should_allow_subset_participation_per_expense():
     bal = compute_balances(people, rates, expenses)
     # First expense: A,B share 30 each; payer A credited 60, so A +60 -30 = +30; B -30
     # Second expense: B,C share 15 each; B +30 -15 = +15; C -15
-    # Final: A +30, B (-30 + 15) = -15, C -15 -> sum zero => after rounding {A: +30.00, B: -15.00, C: -15.00}
+    # Final: A +30, B (-30 + 15) = -15, C -15 -> sum zero
+    # After rounding {A: +30.00, B: -15.00, C: -15.00}
+
     assert bal == {"Alice": Decimal("30.00"), "Bob": Decimal("-15.00"), "Carol": Decimal("-15.00")}
+
+
+def test_should_respect_rounding_modes_in_balances_and_transfers():
+    people = ["A", "B"]
+    rates = {"USD": Decimal("1")}
+    expenses = [
+        dict(
+            id="e1",
+            payer="A",
+            amount=Decimal("0.25"),
+            currency="USD",
+            participants=["A", "B"],
+        )
+    ]
+
+    bal_up = compute_balances(people, rates, expenses, mode="HALF_UP")
+    bal_even = compute_balances(people, rates, expenses, mode="HALF_EVEN")
+
+    assert bal_up == {"A": Decimal("0.13"), "B": Decimal("-0.13")}
+    assert bal_even == {"A": Decimal("0.12"), "B": Decimal("-0.12")}
+
+    transfers_up = suggest_transfers_greedy(bal_up, mode="HALF_UP")
+    transfers_even = suggest_transfers_greedy(bal_even, mode="HALF_EVEN")
+
+    assert transfers_up == [{"from": "B", "to": "A", "amount": Decimal("0.13")}]
+    assert transfers_even == [{"from": "B", "to": "A", "amount": Decimal("0.12")}]

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from .domain.models import Balance, SettleRequest, SettleResponse, Transfer
-from .domain.settle import compute_balances, suggest_transfers_greedy
-from .utils.errors import ValidationError
+from app.domain.models import Balance, SettleRequest, SettleResponse, Transfer
+from app.domain.settle import compute_balances, suggest_transfers_greedy
+from app.utils.errors import ValidationError
 
 router = APIRouter()
 
@@ -18,6 +18,7 @@ def settle(payload: SettleRequest) -> SettleResponse:
             rates=payload.rates,
             expenses=[e.model_dump() for e in payload.expenses],
             places=payload.rounding.places,
+            mode=payload.rounding.mode,
         )
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
