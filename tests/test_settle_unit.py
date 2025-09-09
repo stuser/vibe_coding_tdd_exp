@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+import pytest
+
 from app.domain.settle import compute_balances, suggest_transfers_greedy
 from app.utils.errors import InvalidAmountError, InvalidParticipantsError, MissingRateError
 
@@ -79,12 +81,8 @@ def test_should_reject_negative_or_zero_amounts():
     expenses = [
         dict(id="e1", payer="A", amount=Decimal("0"), currency="USD", participants=["A", "B"])
     ]
-    try:
+    with pytest.raises(InvalidAmountError):
         compute_balances(people, rates, expenses)
-    except InvalidAmountError:
-        pass
-    else:
-        assert False, "Expected InvalidAmountError"
 
 
 def test_should_error_when_missing_rate_for_currency():
@@ -95,12 +93,8 @@ def test_should_error_when_missing_rate_for_currency():
             id="e1", payer="A", amount=Decimal("10"), currency="CHF", participants=["A"]
         )  # CHF missing
     ]
-    try:
+    with pytest.raises(MissingRateError):
         compute_balances(people, rates, expenses)
-    except MissingRateError:
-        pass
-    else:
-        assert False, "Expected MissingRateError"
 
 
 def test_should_error_on_duplicate_participants():
@@ -178,8 +172,7 @@ def test_should_allow_subset_participation_per_expense():
     # First expense: A,B share 30 each; payer A credited 60, so A +60 -30 = +30; B -30
     # Second expense: B,C share 15 each; B +30 -15 = +15; C -15
     # Final: A +30, B (-30 + 15) = -15, C -15 -> sum zero
-    # After rounding {A: +30.00, B: -15.00, C: -15.00}
-
+    # => after rounding {A: +30.00, B: -15.00, C: -15.00}
     assert bal == {"Alice": Decimal("30.00"), "Bob": Decimal("-15.00"), "Carol": Decimal("-15.00")}
 
 
