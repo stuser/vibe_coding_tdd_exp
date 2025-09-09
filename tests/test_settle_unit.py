@@ -91,7 +91,9 @@ def test_should_error_when_missing_rate_for_currency():
     people = ["A", "B"]
     rates = {"USD": Decimal("1")}
     expenses = [
-        dict(id="e1", payer="A", amount=Decimal("10"), currency="CHF", participants=["A"])  # CHF missing
+        dict(
+            id="e1", payer="A", amount=Decimal("10"), currency="CHF", participants=["A"]
+        )  # CHF missing
     ]
     try:
         compute_balances(people, rates, expenses)
@@ -105,7 +107,9 @@ def test_should_round_output_balances_to_two_decimals_and_sum_zero():
     people = ["A", "B", "C"]
     rates = {"USD": Decimal("1")}
     expenses = [
-        dict(id="e1", payer="A", amount=Decimal("100"), currency="USD", participants=["A", "B", "C"])
+        dict(
+            id="e1", payer="A", amount=Decimal("100"), currency="USD", participants=["A", "B", "C"]
+        )
     ]
     bal = compute_balances(people, rates, expenses)
     # Two decimals
@@ -118,7 +122,13 @@ def test_should_not_charge_non_participants():
     people = ["Alice", "Bob", "Carol"]
     rates = {"USD": Decimal("1")}
     expenses = [
-        dict(id="e1", payer="Alice", amount=Decimal("90"), currency="USD", participants=["Alice", "Bob"])
+        dict(
+            id="e1",
+            payer="Alice",
+            amount=Decimal("90"),
+            currency="USD",
+            participants=["Alice", "Bob"],
+        )
     ]
     bal = compute_balances(people, rates, expenses)
     # Carol did not participate; should not be charged and not credited
@@ -129,8 +139,20 @@ def test_should_allow_subset_participation_per_expense():
     people = ["Alice", "Bob", "Carol"]
     rates = {"USD": Decimal("1")}
     expenses = [
-        dict(id="e1", payer="Alice", amount=Decimal("60"), currency="USD", participants=["Alice", "Bob"]),
-        dict(id="e2", payer="Bob", amount=Decimal("30"), currency="USD", participants=["Bob", "Carol"]),
+        dict(
+            id="e1",
+            payer="Alice",
+            amount=Decimal("60"),
+            currency="USD",
+            participants=["Alice", "Bob"],
+        ),
+        dict(
+            id="e2",
+            payer="Bob",
+            amount=Decimal("30"),
+            currency="USD",
+            participants=["Bob", "Carol"],
+        ),
     ]
     bal = compute_balances(people, rates, expenses)
     # First expense: A,B share 30 each; payer A credited 60, so A +60 -30 = +30; B -30

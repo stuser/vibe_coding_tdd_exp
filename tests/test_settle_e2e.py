@@ -45,9 +45,18 @@ def test_should_return_json_response_with_balances_transfers_and_chart():
     data = resp.json()
     assert data["base_currency"] == "USD"
     balances = {b["person"]: Decimal(b["amount"]) for b in data["balances"]}
-    assert balances == {"Alice": Decimal("-65.30"), "Bob": Decimal("50.50"), "Carol": Decimal("14.80")}
+    assert balances == {
+        "Alice": Decimal("-65.30"),
+        "Bob": Decimal("50.50"),
+        "Carol": Decimal("14.80"),
+    }
     transfers = [
-        {"from": t["from"], "to": t["to"], "amount": Decimal(str(t["amount"])), "currency": t["currency"]}
+        {
+            "from": t["from"],
+            "to": t["to"],
+            "amount": Decimal(str(t["amount"])),
+            "currency": t["currency"],
+        }
         for t in data["transfers"]
     ]
     assert transfers == [
@@ -64,7 +73,13 @@ def test_should_validate_payload_and_return_422_on_bad_input():
         "base_currency": "USD",
         "rates": {"USD": "1"},
         "expenses": [
-            {"id": "e1", "payer": "Alice", "amount": "0", "currency": "USD", "participants": ["Alice", "Bob"]}
+            {
+                "id": "e1",
+                "payer": "Alice",
+                "amount": "0",
+                "currency": "USD",
+                "participants": ["Alice", "Bob"],
+            }
         ],
     }
     resp = client.post("/api/settle", json=payload)

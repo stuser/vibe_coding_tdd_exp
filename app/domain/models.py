@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, conlist
 
@@ -18,17 +18,17 @@ class Expense(BaseModel):
     payer: str
     amount: Decimal
     currency: str
-    participants: conlist(str, min_items=1)
-    weights: Optional[List[Decimal]] = None
-    note: Optional[str] = None
+    participants: conlist(str, min_length=1)
+    weights: list[Decimal] | None = None
+    note: str | None = None
 
 
 class SettleRequest(BaseModel):
-    people: conlist(str, min_items=1)
+    people: conlist(str, min_length=1)
     base_currency: str = "USD"
-    rates: Dict[str, Decimal]
+    rates: dict[str, Decimal]
     rounding: Rounding = Rounding()
-    expenses: List[Expense]
+    expenses: list[Expense]
     optimize: Literal["greedy", "exact"] = "greedy"
 
 
@@ -46,6 +46,6 @@ class Transfer(BaseModel):
 
 class SettleResponse(BaseModel):
     base_currency: str
-    balances: List[Balance]
-    transfers: List[Transfer]
-    chart: Dict[str, List]
+    balances: list[Balance]
+    transfers: list[Transfer]
+    chart: dict[str, list]

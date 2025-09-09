@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from decimal import Decimal
-from typing import List
-
 from fastapi import APIRouter, HTTPException
 
 from .domain.models import Balance, SettleRequest, SettleResponse, Transfer
 from .domain.settle import compute_balances, suggest_transfers_greedy
 from .utils.errors import ValidationError
-
 
 router = APIRouter()
 

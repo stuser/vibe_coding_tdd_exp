@@ -6,7 +6,6 @@ from fastapi.templating import Jinja2Templates
 
 from .api import router as api_router
 
-
 app = FastAPI(title="Trip Splitter")
 
 templates = Jinja2Templates(directory="app/web/templates")

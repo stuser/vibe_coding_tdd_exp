@@ -3,14 +3,14 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from decimal import ROUND_HALF_UP, Decimal
 
-from .money import to_base
-from .share import split_shares
 from ..utils.validation import (
     ensure_positive_amount,
     validate_currency_present,
     validate_participants_subset,
     validate_weights,
 )
+from .money import to_base
+from .share import split_shares
 
 
 def _quantize(amount: Decimal, places: int = 2) -> Decimal:
