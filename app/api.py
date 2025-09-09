@@ -31,7 +31,14 @@ def settle(payload: SettleRequest) -> SettleResponse:
 
     balances = [Balance(person=p, amount=a) for p, a in balances_map.items()]
     transfers = [
-        Transfer(from_=t["from"], to=t["to"], amount=t["amount"], currency=payload.base_currency)
+        Transfer.model_validate(
+            {
+                "from": t["from"],
+                "to": t["to"],
+                "amount": t["amount"],
+                "currency": payload.base_currency,
+            }
+        )
         for t in transfers_raw
     ]
 
