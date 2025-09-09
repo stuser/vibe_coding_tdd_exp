@@ -64,6 +64,9 @@ def test_should_return_json_response_with_balances_transfers_and_chart():
         {"from": "Alice", "to": "Carol", "amount": Decimal("14.80"), "currency": "USD"},
     ]
     assert data["chart"]["labels"] == ["Alice", "Bob", "Carol"]
+    assert data["chart"]["values"] == [b["amount"] for b in data["balances"]]
+    chart_values = [Decimal(v) for v in data["chart"]["values"]]
+    assert chart_values == [balances[name] for name in data["chart"]["labels"]]
 
 
 def test_should_return_501_when_optimize_exact_not_implemented():
