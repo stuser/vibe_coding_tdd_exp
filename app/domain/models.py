@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, conlist
+from pydantic import BaseModel, Field
 
 RoundingMode = Literal["HALF_UP", "HALF_EVEN"]
 
@@ -18,13 +18,13 @@ class Expense(BaseModel):
     payer: str
     amount: Decimal
     currency: str
-    participants: conlist(str, min_length=1)
+    participants: list[str] = Field(min_length=1)
     weights: list[Decimal] | None = None
     note: str | None = None
 
 
 class SettleRequest(BaseModel):
-    people: conlist(str, min_length=1)
+    people: list[str] = Field(min_length=1)
     base_currency: str = "USD"
     rates: dict[str, Decimal]
     rounding: Rounding = Rounding()
