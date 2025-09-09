@@ -177,6 +177,33 @@ def test_should_allow_subset_participation_per_expense():
     bal = compute_balances(people, rates, expenses)
     # First expense: A,B share 30 each; payer A credited 60, so A +60 -30 = +30; B -30
     # Second expense: B,C share 15 each; B +30 -15 = +15; C -15
-    # Final: A +30, B (-30 + 15) = -15, C -15
-    # After rounding -> {A: +30.00, B: -15.00, C: -15.00}
+    # Final: A +30, B (-30 + 15) = -15, C -15 -> sum zero
+    # After rounding {A: +30.00, B: -15.00, C: -15.00}
+
     assert bal == {"Alice": Decimal("30.00"), "Bob": Decimal("-15.00"), "Carol": Decimal("-15.00")}
+
+
+def test_should_respect_rounding_modes_in_balances_and_transfers():
+    people = ["A", "B"]
+    rates = {"USD": Decimal("1")}
+    expenses = [
+        dict(
+            id="e1",
+            payer="A",
+            amount=Decimal("0.25"),
+            currency="USD",
+            participants=["A", "B"],
+        )
+    ]
+
+    bal_up = compute_balances(people, rates, expenses, mode="HALF_UP")
+    bal_even = compute_balances(people, rates, expenses, mode="HALF_EVEN")
+
+    assert bal_up == {"A": Decimal("0.13"), "B": Decimal("-0.13")}
+    assert bal_even == {"A": Decimal("0.12"), "B": Decimal("-0.12")}
+
+    transfers_up = suggest_transfers_greedy(bal_up, mode="HALF_UP")
+    transfers_even = suggest_transfers_greedy(bal_even, mode="HALF_EVEN")
+
+    assert transfers_up == [{"from": "B", "to": "A", "amount": Decimal("0.13")}]
+    assert transfers_even == [{"from": "B", "to": "A", "amount": Decimal("0.12")}]

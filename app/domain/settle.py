@@ -1,21 +1,25 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
+from typing import Literal
 
-from ..utils.validation import (
+from app.domain.money import to_base
+from app.domain.share import split_shares
+from app.utils.validation import (
     ensure_positive_amount,
     validate_currency_present,
     validate_participants_subset,
     validate_weights,
 )
-from .money import to_base
-from .share import split_shares
+
+RoundingMode = Literal["HALF_UP", "HALF_EVEN"]
 
 
-def _quantize(amount: Decimal, places: int = 2) -> Decimal:
+def _quantize(amount: Decimal, places: int = 2, mode: RoundingMode = "HALF_UP") -> Decimal:
     q = Decimal(10) ** -places
-    return amount.quantize(q, rounding=ROUND_HALF_UP)
+    rounding_map = {"HALF_UP": ROUND_HALF_UP, "HALF_EVEN": ROUND_HALF_EVEN}
+    return amount.quantize(q, rounding=rounding_map[mode])
 
 
 def compute_balances(
@@ -23,6 +27,7 @@ def compute_balances(
     rates: Mapping[str, Decimal],
     expenses: Iterable[Mapping],
     places: int = 2,
+    mode: RoundingMode = "HALF_UP",
 ) -> dict[str, Decimal]:
     balances: dict[str, Decimal] = {p: Decimal("0") for p in people}
 
@@ -30,7 +35,7 @@ def compute_balances(
         payer = e["payer"]
         amount = Decimal(e["amount"])  # accept Decimal or str
         currency = e["currency"]
-        participants = list(e["participants"])  # type: ignore[index]
+        participants = list(e["participants"])
 
         ensure_positive_amount(amount)
         validate_currency_present(currency, rates)
@@ -47,7 +52,7 @@ def compute_balances(
             balances[person] = balances.get(person, Decimal("0")) - share
 
     # Round to requested places for output consistency
-    rounded = {p: _quantize(a, places) for p, a in balances.items()}
+    rounded = {p: _quantize(a, places, mode) for p, a in balances.items()}
 
     # Adjust last cent to make the sum exactly zero (largest remainder method)
     total = sum(rounded.values())
@@ -55,8 +60,8 @@ def compute_balances(
         # Shift the discrepancy to the person with the largest absolute remainder pre-rounding
         remainders = {p: balances[p] - rounded[p] for p in rounded}
         # pick the one whose adjustment brings total to zero
-        # If total > 0, we need to reduce someone slightly (take from a creditor -> choose max positive remainder)
-        # If total < 0, we need to increase someone slightly (give to a debtor -> choose most negative remainder)
+        # If total > 0, reduce a creditor slightly (max positive remainder)
+        # If total < 0, increase a debtor slightly (most negative remainder)
         if total > 0:
             target = max(remainders, key=lambda k: remainders[k])
             rounded[target] -= total
@@ -70,9 +75,10 @@ def compute_balances(
 def suggest_transfers_greedy(
     balances: Mapping[str, Decimal],
     places: int = 2,
+    mode: RoundingMode = "HALF_UP",
 ) -> list[dict[str, Decimal | str]]:
     # Round balances to cents for transfer computation
-    cents = {p: _quantize(a, places) for p, a in balances.items()}
+    cents = {p: _quantize(a, places, mode) for p, a in balances.items()}
     creditors: list[tuple[str, Decimal]] = [(p, +amt) for p, amt in cents.items() if amt > 0]
     debtors: list[tuple[str, Decimal]] = [(p, -amt) for p, amt in cents.items() if amt < 0]
 
@@ -88,7 +94,7 @@ def suggest_transfers_greedy(
         x = min(c_amt, d_amt)
 
         if x > 0:
-            transfers.append({"from": d_name, "to": c_name, "amount": _quantize(x, places)})
+            transfers.append({"from": d_name, "to": c_name, "amount": _quantize(x, places, mode)})
 
         # Update lists
         if c_amt > d_amt:
