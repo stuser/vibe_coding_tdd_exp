@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import heapq
 from collections.abc import Iterable, Mapping
 from decimal import ROUND_HALF_EVEN, ROUND_HALF_UP, Decimal
 from typing import Literal
@@ -60,8 +61,10 @@ def compute_balances(
         # Shift the discrepancy to the person with the largest absolute remainder pre-rounding
         remainders = {p: balances[p] - rounded[p] for p in rounded}
         # pick the one whose adjustment brings total to zero
-        # If total > 0, reduce a creditor slightly (max positive remainder)
-        # If total < 0, increase a debtor slightly (most negative remainder)
+        # If total > 0, reduce someone slightly:
+        # take from a creditor -> choose max positive remainder
+        # If total < 0, increase someone slightly:
+        # give to a debtor -> choose most negative remainder
         if total > 0:
             target = max(remainders, key=lambda k: remainders[k])
             rounded[target] -= total
@@ -78,37 +81,33 @@ def suggest_transfers_greedy(
     mode: RoundingMode = "HALF_UP",
 ) -> list[dict[str, Decimal | str]]:
     # Round balances to cents for transfer computation
-    cents = {p: _quantize(a, places, mode) for p, a in balances.items()}
-    creditors: list[tuple[str, Decimal]] = [(p, +amt) for p, amt in cents.items() if amt > 0]
-    debtors: list[tuple[str, Decimal]] = [(p, -amt) for p, amt in cents.items() if amt < 0]
+    cents = {p: _quantize(a, places) for p, a in balances.items()}
+    # use negative amounts to turn heapq into a max-heap
+    creditors: list[tuple[Decimal, str]] = [(-amt, p) for p, amt in cents.items() if amt > 0]
+    debtors: list[tuple[Decimal, str]] = [(amt, p) for p, amt in cents.items() if amt < 0]
 
-    # Sort descending by amount
-    creditors.sort(key=lambda x: x[1], reverse=True)
-    debtors.sort(key=lambda x: x[1], reverse=True)
+    heapq.heapify(creditors)
+    heapq.heapify(debtors)
 
     transfers: list[dict[str, Decimal | str]] = []
 
     while creditors and debtors:
-        c_name, c_amt = creditors[0]
-        d_name, d_amt = debtors[0]
+        c_amt_neg, c_name = heapq.heappop(creditors)
+        d_amt_neg, d_name = heapq.heappop(debtors)
+
+        c_amt = -c_amt_neg
+        d_amt = -d_amt_neg
         x = min(c_amt, d_amt)
 
         if x > 0:
             transfers.append({"from": d_name, "to": c_name, "amount": _quantize(x, places, mode)})
 
-        # Update lists
-        if c_amt > d_amt:
-            creditors[0] = (c_name, c_amt - x)
-            debtors.pop(0)
-        elif d_amt > c_amt:
-            debtors[0] = (d_name, d_amt - x)
-            creditors.pop(0)
-        else:
-            creditors.pop(0)
-            debtors.pop(0)
+        c_remaining = c_amt - x
+        d_remaining = d_amt - x
 
-        # Re-sort to always pick the largest remaining
-        creditors.sort(key=lambda y: y[1], reverse=True)
-        debtors.sort(key=lambda y: y[1], reverse=True)
+        if c_remaining > 0:
+            heapq.heappush(creditors, (-c_remaining, c_name))
+        if d_remaining > 0:
+            heapq.heappush(debtors, (-d_remaining, d_name))
 
     return transfers
