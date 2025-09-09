@@ -1,5 +1,17 @@
-numpy
-pandas
-pytest
-black
-ruff
+# Runtime
+fastapi>=0.110
+pydantic>=2.4
+uvicorn>=0.29
+jinja2>=3.1
+aiofiles>=23.1
+
+# Testing
+pytest>=7.4
+httpx>=0.27
+pytest-cov>=4.1
+
+# Code quality
+black>=24.0
+ruff>=0.4
+mypy>=1.8
+isort>=5.13
