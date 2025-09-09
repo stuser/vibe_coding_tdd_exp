@@ -24,7 +24,10 @@ def validate_currency_present(currency: str, rates: Mapping[str, Decimal]) -> No
 
 
 def validate_participants_subset(participants: Iterable[str], people: Iterable[str]) -> None:
-    pset = set(participants)
+    plist = list(participants)
+    if len(plist) != len(set(plist)):
+        raise InvalidParticipantsError("participants must be unique")
+    pset = set(plist)
     if not pset.issubset(set(people)):
         raise InvalidParticipantsError("participants must be subset of people")
     if len(pset) == 0:
