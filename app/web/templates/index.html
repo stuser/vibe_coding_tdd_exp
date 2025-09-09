@@ -14,13 +14,15 @@
     <script>
       // Minimal placeholder chart; real data will be provided by API
       const ctx = document.getElementById('balances-chart').getContext('2d');
+      const labels = ['Alice', 'Bob', 'Carol'];
+      const values = ['-65.30', '50.50', '14.80'].map(Number);
       new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Alice', 'Bob', 'Carol'],
+          labels: labels,
           datasets: [{
             label: 'Balances (USD)',
-            data: [-65.3, 50.5, 14.8],
+            data: values,
             backgroundColor: ['#ff8a80', '#80d8ff', '#ccff90'],
           }]
         },
