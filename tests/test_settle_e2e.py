@@ -69,6 +69,30 @@ def test_should_return_json_response_with_balances_transfers_and_chart():
     assert chart_values == [balances[name] for name in data["chart"]["labels"]]
 
 
+def test_should_return_501_when_optimize_exact_not_implemented():
+    client = TestClient(app)
+    payload = {
+        "people": ["Alice", "Bob", "Carol"],
+        "base_currency": "USD",
+        "rates": {"USD": "1", "CHF": "1.10", "EUR": "1.08"},
+        "rounding": {"mode": "HALF_UP", "places": 2},
+        "expenses": [
+            {
+                "id": "e1",
+                "payer": "Alice",
+                "amount": "90",
+                "currency": "CHF",
+                "participants": ["Alice", "Bob"],
+                "note": "Swiss pass",
+            }
+        ],
+        "optimize": "exact",
+    }
+    resp = client.post("/api/settle", json=payload)
+    assert resp.status_code == 501
+    assert resp.json() == {"detail": "exact mode not implemented"}
+
+
 def test_should_validate_payload_and_return_422_on_bad_input():
     client = TestClient(app)
     payload = {
