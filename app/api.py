@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 from fastapi import APIRouter, HTTPException
 
 from app.domain.models import Balance, SettleRequest, SettleResponse, Transfer

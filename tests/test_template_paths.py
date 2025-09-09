@@ -1,6 +1,7 @@
-from fastapi.testclient import TestClient
 import importlib
 import sys
+
+from fastapi.testclient import TestClient
 
 
 def test_should_render_template_when_cwd_diff(tmp_path, monkeypatch):
