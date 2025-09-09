@@ -5,6 +5,12 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from .money import to_base
 from .share import split_shares
+from ..utils.validation import (
+    ensure_positive_amount,
+    validate_currency_present,
+    validate_participants_subset,
+    validate_weights,
+)
 
 
 def _quantize(amount: Decimal, places: int = 2) -> Decimal:
@@ -25,6 +31,11 @@ def compute_balances(
         amount = Decimal(e["amount"])  # accept Decimal or str
         currency = e["currency"]
         participants = list(e["participants"])  # type: ignore[index]
+
+        ensure_positive_amount(amount)
+        validate_currency_present(currency, rates)
+        validate_participants_subset(participants, people)
+        validate_weights(e.get("weights"), len(participants))
 
         base_amount = to_base(amount, currency, rates)
         shares = split_shares(base_amount, participants, e.get("weights"))
@@ -48,10 +59,10 @@ def compute_balances(
         # If total < 0, we need to increase someone slightly (give to a debtor -> choose most negative remainder)
         if total > 0:
             target = max(remainders, key=lambda k: remainders[k])
-            rounded[target] -= _quantize(total, places)
+            rounded[target] -= total
         else:
             target = min(remainders, key=lambda k: remainders[k])
-            rounded[target] -= _quantize(total, places)
+            rounded[target] -= total
 
     return rounded
 

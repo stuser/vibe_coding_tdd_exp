@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trip Splitter</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <h1>Trip Splitter</h1>
+    <div id="chart-container">
+      <canvas id="balances-chart" width="400" height="200"></canvas>
+    </div>
+    <script>
+      // Minimal placeholder chart; real data will be provided by API
+      const ctx = document.getElementById('balances-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Alice', 'Bob', 'Carol'],
+          datasets: [{
+            label: 'Balances (USD)',
+            data: [-65.3, 50.5, 14.8],
+            backgroundColor: ['#ff8a80', '#80d8ff', '#ccff90'],
+          }]
+        },
+        options: {responsive: true, maintainAspectRatio: false}
+      });
+    </script>
+  </body>
+  </html>
+
