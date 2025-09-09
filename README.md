@@ -162,7 +162,7 @@ curl http://localhost:8000/health
 
 
 ## 已知限制與後續路線圖
-- `optimize=exact` 尚未實作（將限制在小 n，預計以 ILP/最少邊網路流）。
+- `optimize=exact` 尚未實作（將限制在小 n，預計以 ILP/最少邊網路流）。若指定 `optimize="exact"`，API 將回傳 501，訊息為 `exact mode not implemented`。
 - 單頁 UI 目前為最小可用，尚未串接 HTMX 表單互動與即時刷新。
 - 依幣別決定顯示位數（如 JPY 0 位）可透過 `rounding.places` 調整，但尚未做幣別級策略表。
 

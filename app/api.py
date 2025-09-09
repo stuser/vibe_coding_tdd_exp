@@ -24,19 +24,13 @@ def settle(payload: SettleRequest) -> SettleResponse:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
     # Build transfers
-    if payload.optimize == "greedy":
-        transfers_raw = suggest_transfers_greedy(
-            balances_map, places=payload.rounding.places, mode=payload.rounding.mode
-        )
-    else:
-        # Optional exact mode not implemented; default to greedy for now
-        transfers_raw = suggest_transfers_greedy(
-            balances_map, places=payload.rounding.places, mode=payload.rounding.mode
-        )
+    if payload.optimize != "greedy":
+        raise HTTPException(status_code=501, detail="exact mode not implemented")
+    transfers_raw = suggest_transfers_greedy(balances_map, places=payload.rounding.places)
 
     balances = [Balance(person=p, amount=a) for p, a in balances_map.items()]
     transfers = [
-        Transfer.model_validate({**t, "currency": payload.base_currency})
+        Transfer(**t, currency=payload.base_currency)
         for t in transfers_raw
     ]
 
